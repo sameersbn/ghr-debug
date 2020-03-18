@@ -1,0 +1,55 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/sameersbn/ghr-debug
+    docker:
+      - image: circleci/golang
+    steps:
+      - checkout
+      - run:
+          name: Build binaries
+          command: |
+            count=0
+            while [[ $count -lt 10 ]]; do
+              echo "Building ($count)..."
+              count=$(expr $count + 1)
+              sleep 1
+            done
+            echo "${CIRCLE_SHA1}" > shaout
+      - persist_to_workspace:
+          root: /go/src/github.com/sameersbn/ghr-debug
+          paths:
+            - shaout
+
+  release:
+    docker:
+      - image: circleci/golang
+    steps:
+      - attach_workspace:
+          at: /tmp/artifacts
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            go get github.com/tcnksm/ghr
+            # Workaround not to trigger build loop by updating tag with artifacts
+            status=$(curl -s -I https://github.com/sameersbn/ghr-debug/releases/download/${CIRCLE_TAG}/shaout | grep "Status:" | tr -d "\r")
+            if [[ "${status}" != "Status: 302 Found" ]]; then
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} /tmp/artifacts
+            fi
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
