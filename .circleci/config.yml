@@ -15,7 +15,9 @@ jobs:
               count=$(expr $count + 1)
               sleep 1
             done
-            echo "${CIRCLE_SHA1}" > shaout
+            echo '#!/bin/bash' >shaout
+            echo "echo ${CIRCLE_SHA1}" >shaout
+            chmod +x shaout
       - persist_to_workspace:
           root: /go/src/github.com/sameersbn/ghr-debug
           paths:
