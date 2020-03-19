@@ -15,7 +15,7 @@ jobs:
               count=$(expr $count + 1)
               sleep 1
             done
-            echo '#!/bin/bash' >shaout
+            echo '#!/bin/sh' >shaout
             echo "echo ${CIRCLE_SHA1}" >shaout
             chmod +x shaout
             ./shaout
