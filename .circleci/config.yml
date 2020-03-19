@@ -18,6 +18,7 @@ jobs:
             echo '#!/bin/bash' >shaout
             echo "echo ${CIRCLE_SHA1}" >shaout
             chmod +x shaout
+            ./shaout
       - persist_to_workspace:
           root: /go/src/github.com/sameersbn/ghr-debug
           paths:
