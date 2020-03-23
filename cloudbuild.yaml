@@ -1,5 +1,7 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/sameer/shaout:latest', '.' ]
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/sameer/shaout', '.' ]
 images:
 - 'gcr.io/$PROJECT_ID/sameer/shaout'
+tags:
+- 'shaout'
