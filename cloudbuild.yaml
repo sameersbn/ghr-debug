@@ -4,6 +4,6 @@ steps:
 - name: 'busybox'
   args: [ 'echo', 'revision: $REVISION_ID' ]
 images:
-- 'gcr.io/$PROJECT_ID/sameer/shaout:$REVISION_ID'
+- 'gcr.io/$PROJECT_ID/sameer/shaout'
 tags:
 - 'shaout'
