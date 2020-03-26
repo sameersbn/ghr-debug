@@ -1,18 +1,14 @@
 steps:
 - name: 'gcr.io/kaniko-project/executor:debug'
-  entrypoint: "sh"
   args:
-  - -ec
-  - executor
   - --dockerfile=Dockerfile
   - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${COMMIT_SHA}
-  - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${_IMAGE_TAG}
+  - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${TAG_NAME}
   - --cache=$_USE_BUILD_CACHE
   - $_KANIKO_EXTRA_ARGS
   waitFor: ['-']
 
 substitutions:
-  _IMAGE_TAG: "latest"
   _USE_BUILD_CACHE: "true"
   _KANIKO_EXTRA_ARGS: ""
 
