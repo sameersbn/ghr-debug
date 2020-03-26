@@ -9,7 +9,7 @@ steps:
   waitFor: ['-']
 
 substitutions:
-  _IMAGE_TAG: "latest"
+  _IMAGE_TAG: ${TAG_NAME}
   _USE_BUILD_CACHE: "true"
   _KANIKO_EXTRA_ARGS: ""
 
