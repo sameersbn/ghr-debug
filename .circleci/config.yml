@@ -29,19 +29,6 @@ jobs:
           name: Test step 3
           command: echo "Executing test step 3"
 
-  release:
-    docker:
-      - image: cimg/go:1.13
-      - run:
-          name: Release step 1
-          command: echo "Release step 1"
-      - run:
-          name: Release step 2
-          command: echo "Release step 2"
-      - run:
-          name: Release step 3
-          command: echo "Release step 3"
-
 workflows:
   version: 2
   build_and_test:
