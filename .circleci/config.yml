@@ -7,25 +7,25 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Build Step 1
-          command: echo "Executing build step 1..."
+          name: Branch
+          command: echo "$CIRCLE_BRANCH"
       - run:
-          name: Build Step 2
-          command: echo "Executing build step 2..."
+          name: Build Number
+          command: echo "$CIRCLE_BUILD_NUM"
       - run:
-          name: Build Step 3
-          command: echo "Executing build step 3..."
+          name: Job Name`
+          command: echo "$CIRCLE_JOB"
 
   test:
     docker:
       - image: cimg/go:1.13
     steps:
       - run:
-          name: Test step 1
-          command: echo "Executing test step 1"
+          name: Commit
+          command: echo "$CIRCLE_SHA1"
       - run:
-          name: Test step 2
-          command: echo "Executing test step 2"
+          name: Stage
+          command: echo "$CIRCLE_STAGE"
       - run:
           name: Test step 3
           command: echo "Executing test step 3"
