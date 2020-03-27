@@ -2,6 +2,7 @@ version: 2
 
 jobs:
   build:
+    working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     docker:
       - image: cimg/go:1.13
     steps:
