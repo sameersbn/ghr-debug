@@ -1,64 +1,50 @@
 version: 2
+
 jobs:
   build:
-    working_directory: /go/src/github.com/sameersbn/ghr-debug
     docker:
-      - image: circleci/golang
+      - image: cimg/go:1.13
     steps:
       - checkout
       - run:
-          name: Build binaries
-          command: |
-            count=0
-            while [[ $count -lt 10 ]]; do
-              echo "Building ($count)..."
-              count=$(expr $count + 1)
-              sleep 1
-            done
-            echo '#!/bin/sh' >shaout
-            echo "echo ${CIRCLE_SHA1}" >shaout
-            chmod +x shaout
-            ./shaout
-      - persist_to_workspace:
-          root: /go/src/github.com/sameersbn/ghr-debug
-          paths:
-            - shaout
+          name: Build Step 1
+          command: echo "Executing build step 1..."
+      - run:
+          name: Build Step 2
+          command: echo "Executing build step 2..."
+      - run:
+          name: Build Step 3
+          command: echo "Executing build step 3..."
+
+  test:
+    docker:
+      - image: cimg/go:1.13
+      - run:
+          name: Test step 1
+          command: echo "Executing test step 1"
+      - run:
+          name: Test step 2
+          command: echo "Executing test step 2"
+      - run:
+          name: Test step 3
+          command: echo "Executing test step 3"
 
   release:
     docker:
-      - image: circleci/golang
-    steps:
-      - attach_workspace:
-          at: /tmp/artifacts
+      - image: cimg/go:1.13
       - run:
-          name: "Install github-release"
-          command: go get github.com/aktau/github-release
+          name: Release step 1
+          command: echo "Release step 1"
       - run:
-          name: "Publish Release on GitHub"
-          command: |
-            github-release delete -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} 2>/dev/null ||:
-            github-release release -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -d "ghr-debug release ${CIRCLE_TAG}"
+          name: Release step 2
+          command: echo "Release step 2"
       - run:
-          name: "Upload Release artifacts"
-          command: |
-            for f in $(find /tmp/artifacts/ -type f)
-            do
-              github-release upload -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -n "$(basename ${f})" -f "${f}"
-            done
+          name: Release step 3
+          command: echo "Release step 3"
 
 workflows:
   version: 2
-  main:
+  build_and_test:
     jobs:
-      - build:
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+$/
-      - release:
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v\d+\.\d+\.\d+$/
+      - build
+      - test
