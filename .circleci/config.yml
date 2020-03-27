@@ -2,19 +2,14 @@ version: 2
 
 jobs:
   build:
+    working_directory: /go/src/github.com/sameersbn/shaout
     docker:
       - image: cimg/go:1.13
     steps:
       - checkout
       - run:
-          name: Branch
-          command: echo "$CIRCLE_BRANCH"
-      - run:
-          name: Build Number
-          command: echo "$CIRCLE_BUILD_NUM"
-      - run:
-          name: Job Name
-          command: echo "$CIRCLE_JOB"
+          name: Build
+          command: make build
 
   test:
     docker:
