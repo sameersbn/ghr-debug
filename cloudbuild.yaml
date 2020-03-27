@@ -1,9 +1,11 @@
 steps:
-- name: 'gcr.io/kaniko-project/executor:debug'
+- name: 'gcr.io/kaniko-project/executor:latest'
   args:
   - --dockerfile=Dockerfile
   - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${COMMIT_SHA}
   - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${TAG_NAME}
+  - --build-arg=GIT_TAG=${TAG_NAME}
+  - --build-arg=GIT_COMMIT=${COMMIT_SHA}
   - --cache=$_USE_BUILD_CACHE
   - $_KANIKO_EXTRA_ARGS
   waitFor: ['-']
