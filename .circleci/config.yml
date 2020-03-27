@@ -7,6 +7,9 @@ jobs:
       - image: cimg/go:1.13
     steps:
       - checkout
+      - run:
+          name: "Build"
+          command: make build
 
 workflows:
   version: 2
