@@ -19,6 +19,7 @@ jobs:
   test:
     docker:
       - image: cimg/go:1.13
+    steps:
       - run:
           name: Test step 1
           command: echo "Executing test step 1"
@@ -28,6 +29,20 @@ jobs:
       - run:
           name: Test step 3
           command: echo "Executing test step 3"
+
+  release:
+    docker:
+      - image: cimg/go:1.13
+    steps:
+      - run:
+          name: Release step 1
+          command: echo "Release step 1"
+      - run:
+          name: Release step 2
+          command: echo "Release step 2"
+      - run:
+          name: Release step 3
+          command: echo "Release step 3"
 
 workflows:
   version: 2
