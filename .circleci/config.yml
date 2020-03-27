@@ -13,7 +13,7 @@ jobs:
           name: Build Number
           command: echo "$CIRCLE_BUILD_NUM"
       - run:
-          name: Job Name`
+          name: Job Name
           command: echo "$CIRCLE_JOB"
 
   test:

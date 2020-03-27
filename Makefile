@@ -13,7 +13,9 @@ build:
 	$(GO) build $(LDFLAGS) $(GIT_REPO)
 
 install:
-	$(GO) install $(LDFLAGS) -v
+
+test:
+	$(GO) test $(LDFLAGS) -v
 
 clean:
 	$(GO) clean -v
