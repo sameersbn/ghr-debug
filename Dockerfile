@@ -15,6 +15,7 @@ WORKDIR /go/src/github.com/sameersbn/shaout
 COPY . .
 
 RUN make install
+RUN /go/bin/shaout
 
 FROM scratch
 
