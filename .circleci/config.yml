@@ -73,13 +73,13 @@ workflows:
             - prepare-source
           filters:
             tags:
-              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+              only: /^v.*/
       - test:
           requires:
             - prepare-source
           filters:
             tags:
-              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+              only: /^v.*/
       - publish-image:
           requires:
             - build
@@ -88,4 +88,4 @@ workflows:
             branches:
               only: master
             tags:
-              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+              only: /^v.*/
