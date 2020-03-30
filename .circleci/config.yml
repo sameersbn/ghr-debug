@@ -7,6 +7,9 @@ jobs:
     working_directory: ~/go/src/github.com/sameersbn/shaout
     steps:
       - checkout
+      - run:
+          name: Fetch go modules
+          command: make mod-download
       - save_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
           paths:
