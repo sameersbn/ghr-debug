@@ -67,7 +67,10 @@ workflows:
 
   build-test-and-publish:
     jobs:
-      - prepare-source
+      - prepare-source:
+          filters:
+            tags:
+              only: /^v.*/
       - build:
           requires:
             - prepare-source
