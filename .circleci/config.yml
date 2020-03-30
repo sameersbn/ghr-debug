@@ -31,7 +31,9 @@ jobs:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run: make fmt-test
       - run: make vet
-      - run: gotestsum
+      - run: gotestsum --junitfile unit-tests.xml
+      - store_test_results:
+          path: .
 
 workflows:
   version: 2
