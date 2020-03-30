@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  prepare-source:
+  checkout-code:
     docker:
       - image: cimg/go:1.13
     working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
@@ -68,19 +68,19 @@ workflows:
   version: 2
   build-test-and-publish:
     jobs:
-      - prepare-source:
+      - checkout-code:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build:
           requires:
-            - prepare-source
+            - checkout-code
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - test:
           requires:
-            - prepare-source
+            - checkout-code
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
