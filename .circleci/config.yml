@@ -1,54 +1,85 @@
 version: 2
 
 jobs:
-  build:
+  prepare-source:
     docker:
       - image: cimg/go:1.13
+    working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     steps:
       - checkout
       - run:
-          name: Branch
-          command: echo "$CIRCLE_BRANCH"
+          name: Downloading Go modules
+          command: make mod-download
+      - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /home/circleci/go/
+
+  build:
+    docker:
+      - image: cimg/go:1.13
+    working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
+    steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run:
-          name: Build Number
-          command: echo "$CIRCLE_BUILD_NUM"
-      - run:
-          name: Job Name
-          command: echo "$CIRCLE_JOB"
+          name: Building package
+          command: make build
 
   test:
     docker:
       - image: cimg/go:1.13
+    working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run:
-          name: Commit
-          command: echo "$CIRCLE_SHA1"
+          name: Validating code formatting
+          command: make fmt-test
       - run:
-          name: Stage
-          command: echo "$CIRCLE_STAGE"
+          name: Vetting package source code
+          command: make vet
       - run:
-          name: Test step 3
-          command: echo "Executing test step 3"
+          name: Running unit tests
+          command: GOTEST=gotestsum GOTESTSUM_JUNITFILE=unit-tests.xml make test
+      - store_test_results:
+          path: .
 
-  release:
+  publish-image:
     docker:
-      - image: cimg/go:1.13
+      - image: google/cloud-sdk:latest
+    working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run:
-          name: Release step 1
-          command: echo "Release step 1"
+          name: Configuring Google Cloud SDK
+          command: |
+            echo ${GCLOUD_SERVICE_KEY} | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
       - run:
-          name: Release step 2
-          command: echo "Release step 2"
-      - run:
-          name: Release step 3
-          command: echo "Release step 3"
+          name: Building Docker image
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},_IMAGE_TAG=${CIRCLE_TAG:-latest},TAG_NAME=$(git describe --tags --always)
 
 workflows:
   version: 2
-  build_and_test:
+
+  build-test-and-publish:
     jobs:
-      - build
+      - prepare-source
+      - build:
+          requires:
+            - prepare-source
       - test:
           requires:
+            - prepare-source
+      - publish-image:
+          requires:
             - build
+            - test
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/

@@ -1,9 +1,13 @@
 package main
 
-import "fmt"
-import "github.com/sameersbn/shaout/version"
+import (
+	"fmt"
+
+	"github.com/sameersbn/shaout/version"
+	"rsc.io/quote"
+)
 
 func main() {
-	fmt.Println("tag   :", version.Tag)
-	fmt.Println("commit:", version.Commit)
+	quote.Go()
+	fmt.Println(version.Show())
 }

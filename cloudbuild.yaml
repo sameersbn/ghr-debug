@@ -3,7 +3,7 @@ steps:
   args:
   - --dockerfile=Dockerfile
   - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${COMMIT_SHA}
-  - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${TAG_NAME}
+  - --destination=gcr.io/$PROJECT_ID/sameer/shaout:${_IMAGE_TAG}
   - --build-arg=GIT_TAG=${TAG_NAME}
   - --build-arg=GIT_COMMIT=${COMMIT_SHA}
   - --cache=$_USE_BUILD_CACHE
@@ -11,6 +11,7 @@ steps:
   waitFor: ['-']
 
 substitutions:
+  _IMAGE_TAG: "latest"
   _USE_BUILD_CACHE: "true"
   _KANIKO_EXTRA_ARGS: ""
 
