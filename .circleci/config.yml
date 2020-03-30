@@ -31,7 +31,7 @@ jobs:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run: make fmt-test
       - run: make vet
-      - run: gotestsum --junitfile unit-tests.xml
+      - run: GOTEST=gotestsum GOTESTSUM_JUNITFILE=unit-tests.xml make test
       - store_test_results:
           path: .
 
