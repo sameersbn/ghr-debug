@@ -21,5 +21,8 @@ install:
 test:
 	$(GO) test -v ./...
 
+vet:
+	$(GO) vet ./...
+
 clean:
 	$(GO) clean -v

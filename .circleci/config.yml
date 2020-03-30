@@ -34,6 +34,9 @@ jobs:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run:
+          name: "Vet"
+          command: make vet
+      - run:
           name: "Test"
           command: make test
 
