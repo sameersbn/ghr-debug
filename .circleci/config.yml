@@ -35,9 +35,23 @@ jobs:
       - store_test_results:
           path: .
 
+  publish-image:
+    docker:
+      - image: google/cloud-sdk:latest
+    working_directory: ~/go/src/github.com/sameersbn/shaout
+    steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - run: |
+          echo ${GCLOUD_SERVICE_KEY} | gcloud auth activate-service-account --key-file=-
+          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+          gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-latest}
+
 workflows:
   version: 2
-  build-and-test:
+
+  build-test-and-publish:
     jobs:
       - checkout_code
       - build:
@@ -46,3 +60,10 @@ workflows:
       - test:
           requires:
             - checkout_code
+      - publish-image:
+          requires:
+            - build
+            - test
+          filters:
+            branches:
+              only: circle-ci
