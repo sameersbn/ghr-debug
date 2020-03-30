@@ -60,7 +60,7 @@ jobs:
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
       - run:
           name: Building Docker image
-          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},_IMAGE_TAG=${CIRCLE_TAG:-latest},_APP_VERSION=$(git describe --tags --always)
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},_IMAGE_TAG=${CIRCLE_TAG:-latest},TAG_NAME=$(git describe --tags --always)
 
 workflows:
   version: 2
