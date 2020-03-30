@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"rsc.io/quote"
 	"github.com/sameersbn/shaout/version"
+	"rsc.io/quote"
 )
 
 func main() {

@@ -7,9 +7,7 @@ jobs:
     working_directory: ~/go/src/github.com/sameersbn/shaout
     steps:
       - checkout
-      - run:
-          name: Fetch go modules
-          command: make mod-download
+      - run: make mod-download
       - save_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -22,9 +20,7 @@ jobs:
     steps:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-      - run:
-          name: "Build"
-          command: make build
+      - run: make build
 
   test:
     docker:
@@ -33,12 +29,9 @@ jobs:
     steps:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-      - run:
-          name: "Vet"
-          command: make vet
-      - run:
-          name: "Test"
-          command: make test
+      - run: make fmt-test
+      - run: make vet
+      - run: make test
 
 workflows:
   version: 2
