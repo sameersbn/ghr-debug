@@ -16,7 +16,7 @@ install:
 	$(GO) install $(LDFLAGS) -v
 
 test:
-	$(GO) test $(LDFLAGS) -v
+	$(GO) test $(LDFLAGS) -v ./...
 
 clean:
 	$(GO) clean -v
