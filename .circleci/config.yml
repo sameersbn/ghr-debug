@@ -7,7 +7,9 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     steps:
       - checkout
-      - run: make mod-download
+      - run:
+          name: Downloading Go modules
+          command: make mod-download
       - save_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -20,7 +22,9 @@ jobs:
     steps:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-      - run: make build
+      - run:
+          name: Building package
+          command: make build
 
   test:
     docker:
@@ -29,9 +33,15 @@ jobs:
     steps:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-      - run: make fmt-test
-      - run: make vet
-      - run: GOTEST=gotestsum GOTESTSUM_JUNITFILE=unit-tests.xml make test
+      - run:
+          name: Validating code formatting
+          command: make fmt-test
+      - run:
+          name: Vetting package source code
+          command: make vet
+      - run:
+          name: Running unit tests
+          command: GOTEST=gotestsum GOTESTSUM_JUNITFILE=unit-tests.xml make test
       - store_test_results:
           path: .
 
@@ -42,9 +52,15 @@ jobs:
     steps:
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-      - run: |
-          echo ${GCLOUD_SERVICE_KEY} | gcloud auth activate-service-account --key-file=-
-      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},_IMAGE_TAG=${CIRCLE_TAG:-latest},_APP_VERSION=$(git describe --tags --always)
+      - run:
+          name: Configuring Google Cloud SDK
+          command: |
+            echo ${GCLOUD_SERVICE_KEY} | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+      - run:
+          name: Building Docker image
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},_IMAGE_TAG=${CIRCLE_TAG:-latest},_APP_VERSION=$(git describe --tags --always)
 
 workflows:
   version: 2
