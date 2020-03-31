@@ -11,6 +11,9 @@ RUN go mod download
 ARG GIT_COMMIT
 ARG GIT_TAG
 
+ENV GIT_COMMIT=${GIT_COMMIT:-unknown}
+ENV GIT_TAG=${GIT_TAG:-unknown}
+
 COPY . .
 
 RUN make install
