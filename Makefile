@@ -5,6 +5,7 @@ GIT_COMMIT ?= $(shell git rev-parse HEAD)
 GO         ?= go
 GOFMT      ?= gofmt
 GOTEST     ?= go test
+GOTOOL     ?= go tool
 LDFLAGS     = -ldflags="-s -w -X $(GIT_REPO)/version.Tag=$(GIT_TAG) -X $(GIT_REPO)/version.Commit=$(GIT_COMMIT)"
 
 .PHONY: build install clean mod-download
@@ -25,7 +26,11 @@ fmt-test:
 	@test -z $(shell $(GOFMT) -l $(shell $(GO) list -f '{{$$d := .Dir}}{{range .TestGoFiles}}{{$$d}}/{{.}} {{end}}' ./...))
 
 test:
-	$(GOTEST) ./...
+	$(GOTEST) -cover -mod=readonly ./...
+
+coverage:
+	$(GOTEST) -cover -coverprofile=c.out ./...
+	$(GOTOOL) cover -html=c.out -o coverage.html
 
 fmt:
 	$(GOFMT) -s -w $(shell $(GO) list -f '{{$$d := .Dir}}{{range .GoFiles}}{{$$d}}/{{.}} {{end}}' ./...)

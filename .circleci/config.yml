@@ -43,9 +43,17 @@ jobs:
           command: make vet
       - run:
           name: Running unit tests
-          command: GOTEST=gotestsum GOTESTSUM_JUNITFILE=unit-tests.xml make test
+          command: GOTEST='gotestsum --' GOTESTSUM_JUNITFILE='unit-tests.xml' make test
       - store_test_results:
           path: .
+      - run:
+          name: Generating coverage report
+          command: |
+            mkdir /tmp/artifacts
+            make coverage
+            mv coverage.html /tmp/artifacts
+      - store_artifacts:
+          path: /tmp/artifacts
 
   publish-image:
     docker:
