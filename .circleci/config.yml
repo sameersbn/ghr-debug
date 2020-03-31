@@ -6,9 +6,7 @@ jobs:
       - image: cimg/go:1.13
     working_directory: /home/circleci/go/src/github.com/sameersbn/shaout
     steps:
-      - checkout:
-          post:
-            - git fetch --tags
+      - checkout
       - run:
           name: Downloading Go modules
           command: make mod-download
