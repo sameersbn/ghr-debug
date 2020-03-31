@@ -72,6 +72,7 @@ jobs:
             echo "gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_IMAGE_TAG=${CIRCLE_TAG:-latest}"
             gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
+
 workflows:
   version: 2
   build-test-and-publish:
