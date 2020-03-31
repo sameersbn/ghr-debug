@@ -2,6 +2,9 @@ GIT_REPO    = github.com/sameersbn/shaout
 GIT_TAG    ?= $(shell git describe --tags --always)
 GIT_COMMIT ?= $(shell git rev-parse HEAD)
 
+IMAGE_REPO ?= gcr.io/sameersbn
+IMAGE ?= $(IMAGE_REPO)/$(shell basename $(GIT_REPO)):$(GIT_TAG)
+
 GO         ?= go
 GOFMT      ?= gofmt
 GOTEST     ?= go test
@@ -38,6 +41,9 @@ fmt:
 
 vet:
 	$(GO) vet ./...
+
+image:
+	docker build -t $(IMAGE) . --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg GIT_TAG=$(GIT_TAG)
 
 clean:
 	$(GO) clean -v
