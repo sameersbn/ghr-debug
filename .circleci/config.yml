@@ -44,10 +44,9 @@ jobs:
 
   publish-image:
     executor:
-      name: gcp-cli/default
+      name: gcp-cli/google
     steps:
       - checkout
-      - gcp-cli/install
       - gcp-cli/initialize
       - run:
           name: Building image
@@ -71,5 +70,5 @@ workflows:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
-            branches:
-              only: master
+            # branches:
+            #   only: master
