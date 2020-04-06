@@ -9,6 +9,7 @@ IMAGE      ?= $(IMAGE_REPO)/$(shell basename $(GIT_REPO)):$(GIT_TAG)
 
 GO         ?= go
 GOFMT      ?= gofmt
+GOLINT     ?= golint
 GOTEST     ?= gotestsum --junitfile $(OUTPUT_DIR)$(PACKAGE)-unit-tests.xml --
 GOTOOL     ?= go tool
 LDFLAGS    += -s -w -X $(GIT_REPO)/version.Tag=$(GIT_TAG) -X $(GIT_REPO)/version.Commit=$(GIT_COMMIT)
@@ -30,7 +31,7 @@ install: ## Install the binary
 	$(GO) install -ldflags="$(LDFLAGS)" -v
 
 test: ## Run unit tests
-	$(GOTEST) -coverprofile=c.out ./...
+	$(GOTEST) -race -coverprofile=c.out ./...
 
 coverage: ## Generate code coverage
 	$(GOTOOL) cover -html=c.out -o $(OUTPUT_DIR)$(PACKAGE)-coverage.html
