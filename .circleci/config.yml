@@ -4,6 +4,7 @@ orbs:
   go: circleci/go@1.1.1
   gcp-cli: circleci/gcp-cli@1.8.4
   codecov: codecov/codecov@1.0.5
+  github-release: h-matsuo/github-release@0.1.3
 
 jobs:
   build:
@@ -45,6 +46,13 @@ jobs:
       - codecov/upload:
           file: c.out
 
+  release:
+    executor:
+      name: github-release/default
+    steps:
+      - github-release/internal__install-deps
+      - run: github-release
+
   publish-image:
     executor:
       name: gcp-cli/google
@@ -63,6 +71,10 @@ workflows:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - test:
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+      - release:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
