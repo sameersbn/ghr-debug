@@ -1,3 +1,4 @@
-*.out
-*.bkp
+**/c.out
+**/*-coverage.html
+**/*-unit-tests.xml
 shaout
