@@ -41,15 +41,16 @@ jobs:
           command: make vet
       - run:
           name: Running unit tests
-          command: GOTEST='gotestsum --' GOTESTSUM_JUNITFILE='unit-tests.xml' make test
+          command: |
+            mkdir -p /tmp/tests
+            OUTPUT_DIR=/tmp/tests/ make test
       - store_test_results:
-          path: .
+          path: /tmp/tests
       - run:
           name: Generating coverage report
           command: |
             mkdir /tmp/artifacts
-            make coverage
-            mv coverage.html /tmp/artifacts
+            OUTPUT_DIR=/tmp/artifacts/ make coverage
       - store_artifacts:
           path: /tmp/artifacts
 

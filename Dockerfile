@@ -17,7 +17,6 @@ ENV GIT_TAG=${GIT_TAG:-unknown}
 COPY . .
 
 RUN make install
-RUN /go/bin/shaout
 
 FROM scratch
 

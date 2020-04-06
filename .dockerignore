@@ -1,3 +1,12 @@
+**/*-coverage.html
+**/*-unit-tests.xml
+**/*_test.go
+**/.gitignore
+**/c.out
+**/README.md
+.circleci
+.dockerignore
 .gcloudignore
-.gitignore
+.git/
 cloudbuild.yaml
+shaout
