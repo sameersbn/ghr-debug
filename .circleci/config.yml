@@ -29,25 +29,24 @@ jobs:
           command: make vet
       - run:
           name: Run tests
-          command: |
-            export OUTPUT_DIR=/tmp/tests/
-            mkdir -p ${OUTPUT_DIR} && make test
+          command: mkdir -p ${OUTPUT_DIR} && make test
+          environment:
+            OUTPUT_DIR: /tmp/test-results/
       - store_test_results:
-          path: /tmp/tests
+          path: /tmp/test-results/
       - run:
           name: Generate coverage report
-          command: |
-            export OUTPUT_DIR=/tmp/artifacts/
-            mkdir -p ${OUTPUT_DIR} && make coverage
+          command: mkdir -p ${OUTPUT_DIR} && make coverage
+          environment:
+            OUTPUT_DIR: /tmp/artifacts/
       - store_artifacts:
-          path: /tmp/artifacts
+          path: /tmp/artifacts/
 
   publish-image:
     executor:
-      name: gcp-cli/default
+      name: gcp-cli/google
     steps:
       - checkout
-      - gcp-cli/install
       - gcp-cli/initialize
       - run:
           name: Building image
