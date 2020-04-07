@@ -63,8 +63,7 @@ jobs:
           tag: ${CIRCLE_TAG}
           file-path: /tmp/dist/
           title: Shaout ${CIRCLE_TAG}
-          description: |
-            This is release of shaout ${CIRCLE_TAG}
+          description: $(git cat-file -p ${CIRCLE_TAG} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6)
 
   publish-image:
     executor:
