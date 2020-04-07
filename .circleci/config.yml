@@ -80,9 +80,13 @@ jobs:
       - run:
           name: Generate changelog
           command: |
-            PREV_TAG=$(git describe --abbrev=0 ${CIRCLE_TAG}^)
-            echo ${PREV_TAG}
-            git --no-pager log --pretty=format:"%h %s" ${PREV_TAG}..${CIRCLE_TAG} | grep -v "Merge"
+            PREV_TAG=$(git describe --tags --abbrev=0 ${CIRCLE_TAG}^)
+            (
+              git cat-file -p ${CIRCLE_TAG} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6
+              echo -e "\n# Changelog\n"
+              git --no-pager log --reverse --pretty=format:"%h %s" ${PREV_TAG}..${CIRCLE_TAG} | grep -v "Merge"
+            ) > Changes.txt
+            cat Changes.txt
       - github-release/create:
           tag: ${CIRCLE_TAG}
           file-path: /tmp/dist/
