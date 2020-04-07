@@ -48,6 +48,14 @@ jobs:
       - codecov/upload:
           file: c.out
 
+  publish-image:
+    executor:
+      name: gcp-cli/google
+    steps:
+      - checkout
+      - gcp-cli/initialize
+      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
+
   publish-release:
     executor:
       name: github-release/default
@@ -61,14 +69,6 @@ jobs:
           file-path: /tmp/dist/
           title: Shaout ${CIRCLE_TAG}
           description: $(git cat-file -p ${CIRCLE_TAG} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6)
-
-  publish-image:
-    executor:
-      name: gcp-cli/google
-    steps:
-      - checkout
-      - gcp-cli/initialize
-      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
 workflows:
   build-test-and-publish:
