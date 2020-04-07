@@ -7,7 +7,7 @@ orbs:
   github-release: h-matsuo/github-release@0.1.3
 
 jobs:
-  build:
+  build-package:
     executor:
       name: go/default
       tag: '1.14'
@@ -16,6 +16,14 @@ jobs:
       - go/mod-download-cached
       - run: make build
 
+  build-image:
+    executor:
+      name: gcp-cli/google
+    steps:
+      - checkout
+      - gcp-cli/initialize
+      - run: gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
+
   test:
     executor:
       name: go/default
@@ -23,21 +31,15 @@ jobs:
     steps:
       - checkout
       - go/mod-download-cached
+      - run: make fmt-test
+      - run: make vet
       - run:
-          name: Run fmt test
-          command: make fmt-test
-      - run:
-          name: Run vet check
-          command: make vet
-      - run:
-          name: Run tests
           command: mkdir -p ${OUTPUT_DIR} && make test
           environment:
             OUTPUT_DIR: /tmp/test-results/
       - store_test_results:
           path: /tmp/test-results/
       - run:
-          name: Generate coverage report
           command: mkdir -p ${OUTPUT_DIR} && make coverage
           environment:
             OUTPUT_DIR: /tmp/artifacts/
@@ -46,19 +48,14 @@ jobs:
       - codecov/upload:
           file: c.out
 
-  publish:
+  publish-release:
     executor:
       name: github-release/default
     steps:
-      - run:
-          name: Generate fake artifacts
-          command: |
+      - run: |
             mkdir -p /tmp/dist/
             echo "shaout-linux-amd64" > /tmp/dist/shaout-linux-amd64
             echo "shaout-darwin-amd64" > /tmp/dist/shaout-darwin-amd64
-      - run:
-          name: List files
-          command: ls -la /tmp/dist/
       - github-release/create:
           tag: ${CIRCLE_TAG}
           file-path: /tmp/dist/
@@ -71,14 +68,16 @@ jobs:
     steps:
       - checkout
       - gcp-cli/initialize
-      - run:
-          name: Building image
-          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_IMAGE_TAG=${CIRCLE_TAG:-latest}
+      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
 workflows:
   build-test-and-publish:
     jobs:
-      - build:
+      - build-package:
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+      - build-image:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
@@ -86,22 +85,23 @@ workflows:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
-      - publish-image:
+      - publish-release:
           requires:
-            - build
-            - test
-          filters:
-            tags:
-              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
-            branches:
-              only: master
-      - publish:
-          requires:
-            - build
+            - build-package
+            - build-image
             - test
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
             branches:
               ignore: /.*/
-
+      - publish-image:
+          requires:
+            - build-package
+            - build-image
+            - test
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              only: master
