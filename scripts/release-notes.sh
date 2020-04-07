@@ -14,7 +14,7 @@ if ! git rev-list ${RELEASE} >/dev/null 2>&1; then
 fi
 
 PREV_RELEASE=$(git describe --always --tags --abbrev=0 ${RELEASE}^)
-RELEASE_HIGHLIGHTS=$(git cat-file -p ${RELEASE} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6)
+NOTABLE_CHANGES=$(git cat-file -p ${RELEASE} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6)
 CHANGELOG=$(git log --no-merges --pretty=format:'- [%h] %s (%aN)' ${PREV_RELEASE}..${RELEASE})
 if [[ $? -ne 0 ]]; then
 	echo "Error creating changelog"
@@ -22,7 +22,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 cat <<EOF
-${RELEASE_HIGHLIGHTS}
+${NOTABLE_CHANGES}
 
 ## Installation
 
