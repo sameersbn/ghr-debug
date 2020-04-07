@@ -79,11 +79,11 @@ jobs:
       - run:
           name: Generate changelog
           command: |
-            PREV_TAG=$(git describe --tags --abbrev=0 ${CIRCLE_TAG}^)
+            PREV_RELEASE=$(git describe --always --tags --abbrev=0 ${CIRCLE_TAG}^)
             (
               git cat-file -p ${CIRCLE_TAG} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6
               echo -e "\n# Changelog\n"
-              git --no-pager log --reverse --pretty=format:"%h %s" ${PREV_TAG}..${CIRCLE_TAG} | grep -v "Merge"
+              git log --no-merges --pretty=format:'- %s %H (%aN)' ${PREV_RELEASE}..${CIRCLE_TAG}
             ) > /tmp/release-notes.txt
       - run:
           name: Installing github-release

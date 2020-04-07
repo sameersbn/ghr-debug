@@ -29,6 +29,9 @@ mod-download: ## Download go modules
 build: ## Build the binary
 	$(GO) build -ldflags="$(LDFLAGS)" $(GIT_REPO)
 
+install: ## Install the binary
+	$(GO) install -ldflags="$(LDFLAGS)" -v
+
 release:
 	@set -e ; \
 	for platform in $(TARGETS); do \
@@ -39,9 +42,6 @@ release:
 		echo "GOOS=$${GOOS} GOARCH=$${GOARCH} $(GO) build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)$${RELEASE_BINARY} $(GIT_REPO)" ; \
 		GOOS=$${GOOS} GOARCH=$${GOARCH} $(GO) build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)$${RELEASE_BINARY} $(GIT_REPO) ; \
 	done
-
-install: ## Install the binary
-	$(GO) install -ldflags="$(LDFLAGS)" -v
 
 test: ## Run unit tests
 	$(GOTEST) -race -coverprofile=c.out ./...
@@ -56,10 +56,10 @@ vet: ## Vet source files
 	$(GO) vet ./...
 
 fmt: ## Format source files
-	$(GOFMT) -s -w $(shell $(GO) list -f '{{$$d := .Dir}}{{range .GoFiles}}{{$$d}}/{{.}}{{end}} {{$$d := .Dir}}{{range .TestGoFiles}}{{$$d}}/{{.}}{{end}}' ./...)
+	$(GOFMT) -s -w $(shell $(GO) list -f '{{$$d := .Dir}}{{range .GoFiles}}{{$$d}}/{{.}} {{end}} {{$$d := .Dir}}{{range .TestGoFiles}}{{$$d}}/{{.}} {{end}}' ./...)
 
 fmt-test: ## Check source formatting
-	@test -z $(shell $(GOFMT) -l $(shell $(GO) list -f '{{$$d := .Dir}}{{range .GoFiles}}{{$$d}}/{{.}}{{end}} {{$$d := .Dir}}{{range .TestGoFiles}}{{$$d}}/{{.}}{{end}}' ./...))
+	@test -z $(shell $(GOFMT) -l $(shell $(GO) list -f '{{$$d := .Dir}}{{range .GoFiles}}{{$$d}}/{{.}} {{end}} {{$$d := .Dir}}{{range .TestGoFiles}}{{$$d}}/{{.}} {{end}}' ./...))
 
 image:
 	docker build -t $(IMAGE) . --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg GIT_TAG=$(GIT_TAG)
