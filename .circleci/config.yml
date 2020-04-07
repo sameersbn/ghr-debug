@@ -65,14 +65,18 @@ jobs:
 
   release:
     executor:
-      name: github-release/default
+      name: go/default
+      tag: '1.14'
     steps:
+      - checkout
+      - go/mod-download-cached
       - run:
-          name: Generating fake artifacts
-          command: |
-            mkdir -p /tmp/dist/
-            echo "shaout-linux-amd64" > /tmp/dist/shaout-linux-amd64
-            echo "shaout-darwin-amd64" > /tmp/dist/shaout-darwin-amd64
+          name: Building release packages
+          command: make release
+          environment:
+            DIST_DIR: /tmp/dist/
+            GIT_TAG: ${CIRCLE_TAG}
+            GIT_COMMIT: ${CIRCLE_SHA1}
       - github-release/create:
           tag: ${CIRCLE_TAG}
           file-path: /tmp/dist/

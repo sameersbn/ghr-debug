@@ -1,4 +1,6 @@
 PACKAGE     = shaout
+TARGETS    ?= darwin/amd64 linux/amd64 windows/amd64
+DIST_DIR   ?=
 
 GIT_REPO    = github.com/sameersbn/$(PACKAGE)
 GIT_TAG    ?= $(shell git describe --tags --always)
@@ -27,6 +29,17 @@ mod-download: ## Download go modules
 build: ## Build the binary
 	$(GO) build -ldflags="$(LDFLAGS)" $(GIT_REPO)
 
+release:
+	@set -e ; \
+	for platform in $(TARGETS); do \
+		GOOS=$${platform%/*} ; \
+		GOARCH=$${platform#*/} ; \
+		RELEASE_BINARY=$(PACKAGE)-$${GOOS}-$${GOARCH} ; \
+		[ $${GOOS} = "windows" ] && RELEASE_BINARY=$${RELEASE_BINARY}.exe ; \
+		echo "GOOS=$${GOOS} GOARCH=$${GOARCH} $(GO) build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)$${RELEASE_BINARY} $(GIT_REPO)" ; \
+		GOOS=$${GOOS} GOARCH=$${GOARCH} $(GO) build -ldflags="$(LDFLAGS)" -o $(DIST_DIR)$${RELEASE_BINARY} $(GIT_REPO) ; \
+	done
+
 install: ## Install the binary
 	$(GO) install -ldflags="$(LDFLAGS)" -v
 
@@ -52,6 +65,6 @@ image:
 	docker build -t $(IMAGE) . --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg GIT_TAG=$(GIT_TAG)
 
 clean: ## Clean build artifacts
-	@$(RM) -rf $(PACKAGE)
-	rm -rf $(PACKAGE)-unit-tests.xml
-	rm -rf c.out $(PACKAGE)-coverage.html
+	$(RM) -rf $(PACKAGE) $(DIST_DIR)$(PACKAGE)-*
+	$(RM) -rf $(PACKAGE)-unit-tests.xml
+	$(RM) -rf c.out $(PACKAGE)-coverage.html
