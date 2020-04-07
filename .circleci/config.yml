@@ -14,10 +14,14 @@ jobs:
     steps:
       - checkout
       - go/mod-download-cached
-      - run: make build
+      - run:
+          name: Building package
+          command: make build
       - gcp-cli/install
       - gcp-cli/initialize
-      - run: gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
+      - run:
+          name: Building docker image
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
 
   test:
     executor:
@@ -26,15 +30,21 @@ jobs:
     steps:
       - checkout
       - go/mod-download-cached
-      - run: make fmt-test
-      - run: make vet
       - run:
+          name: Validating code formatting
+          command: make fmt-test
+      - run:
+          name: Vetting code
+          command: make vet
+      - run:
+          name: Running go unit tests
           command: mkdir -p ${OUTPUT_DIR} && make test
           environment:
             OUTPUT_DIR: /tmp/test-results/
       - store_test_results:
           path: /tmp/test-results/
       - run:
+          name: Generating coverage report
           command: mkdir -p ${OUTPUT_DIR} && make coverage
           environment:
             OUTPUT_DIR: /tmp/artifacts/
@@ -49,13 +59,17 @@ jobs:
     steps:
       - checkout
       - gcp-cli/initialize
-      - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
+      - run:
+          name: Publishing docker image
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
   release:
     executor:
       name: github-release/default
     steps:
-      - run: |
+      - run:
+          name: Generating fake artifacts
+          command: |
             mkdir -p /tmp/dist/
             echo "shaout-linux-amd64" > /tmp/dist/shaout-linux-amd64
             echo "shaout-darwin-amd64" > /tmp/dist/shaout-darwin-amd64
