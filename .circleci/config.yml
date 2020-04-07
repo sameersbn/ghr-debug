@@ -50,11 +50,18 @@ jobs:
     executor:
       name: github-release/default
     steps:
+      - run:
+          name: Generate fake artifacts
+          command: |
+            mkdir -p /tmp/dist/
+            touch /tmp/dist/shaout-linux-amd64
+            touch /tmp/dist/shaout-darwin-amd64
       - github-release/create:
           tag: ${CIRCLE_TAG}
           title: Shaout ${CIRCLE_TAG}
           description: |
             This is release of shaout ${CIRCLE_TAG}
+          file-path: /tmp/dist/
 
   publish-image:
     executor:
