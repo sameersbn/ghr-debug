@@ -16,7 +16,7 @@ GOTEST     ?= gotestsum --junitfile $(OUTPUT_DIR)$(PACKAGE)-unit-tests.xml --
 GOTOOL     ?= go tool
 LDFLAGS    += -s -w -X $(GIT_REPO)/version.Tag=$(GIT_TAG) -X $(GIT_REPO)/version.Commit=$(GIT_COMMIT)
 
-.PHONY: build install clean mod-download
+.PHONY: help mod-download build release install test coverage lint vet fmt fmt-test image clean
 
 all: build
 
