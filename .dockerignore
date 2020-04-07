@@ -8,5 +8,6 @@
 .dockerignore
 .gcloudignore
 .git/
+/shaout
 cloudbuild.yaml
-shaout
+scripts/

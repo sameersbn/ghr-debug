@@ -77,23 +77,14 @@ jobs:
             GIT_TAG: ${CIRCLE_TAG}
             GIT_COMMIT: ${CIRCLE_SHA1}
       - run:
-          name: Generate changelog
-          command: |
-            PREV_RELEASE=$(git describe --always --tags --abbrev=0 ${CIRCLE_TAG}^)
-            (
-              git cat-file -p ${CIRCLE_TAG} | sed '/-----BEGIN PGP SIGNATURE-----/,//d' | tail -n +6
-              echo -e "\n# Changelog\n"
-              git log --no-merges --pretty=format:'- %s %H (%aN)' ${PREV_RELEASE}..${CIRCLE_TAG}
-            ) > /tmp/release-notes.txt
-      - run:
-          name: Installing github-release
+          name: Installing github-release tool
           command: go get github.com/aktau/github-release
       - run:
           name: Creating github release
           command: |
             PRE_RELEASE=${CIRCLE_TAG/${CIRCLE_TAG%-rc[0-9]*}/}
             github-release delete -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} 2>/dev/null ||:
-            cat /tmp/release-notes.txt | github-release release ${PRE_RELEASE:+-p} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -d -
+            ./scripts/release-notes.sh ${CIRCLE_TAG} | github-release release ${PRE_RELEASE:+-p} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -d -
             for f in $(find /tmp/dist -type f); do github-release upload -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -n $(basename ${f}) -f ${f} ; done
 
 workflows:
