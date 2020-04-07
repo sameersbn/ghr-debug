@@ -77,6 +77,12 @@ jobs:
             DIST_DIR: /tmp/dist/
             GIT_TAG: ${CIRCLE_TAG}
             GIT_COMMIT: ${CIRCLE_SHA1}
+      - run:
+          name: Generate changelog
+          command: |
+            PREV_TAG=$(git describe --abbrev=0 ${CIRCLE_TAG}^)
+            echo ${PREV_TAG}
+            git --no-pager log --pretty=format:"%h %s" ${PREV_TAG}..${CIRCLE_TAG} | grep -v "Merge"
       - github-release/create:
           tag: ${CIRCLE_TAG}
           file-path: /tmp/dist/
