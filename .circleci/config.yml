@@ -7,7 +7,7 @@ orbs:
   github-release: h-matsuo/github-release@0.1.3
 
 jobs:
-  build-package:
+  build:
     executor:
       name: go/default
       tag: '1.14'
@@ -15,12 +15,7 @@ jobs:
       - checkout
       - go/mod-download-cached
       - run: make build
-
-  build-image:
-    executor:
-      name: gcp-cli/google
-    steps:
-      - checkout
+      - gcp-cli/install
       - gcp-cli/initialize
       - run: gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
 
@@ -48,7 +43,7 @@ jobs:
       - codecov/upload:
           file: c.out
 
-  publish-image:
+  publish:
     executor:
       name: gcp-cli/google
     steps:
@@ -56,7 +51,7 @@ jobs:
       - gcp-cli/initialize
       - run: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
-  publish-release:
+  release:
     executor:
       name: github-release/default
     steps:
@@ -73,11 +68,7 @@ jobs:
 workflows:
   build-test-and-publish:
     jobs:
-      - build-package:
-          filters:
-            tags:
-              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
-      - build-image:
+      - build:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
@@ -85,19 +76,18 @@ workflows:
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
-      - publish-image:
+      - publish:
           requires:
-            - build-package
-            - build-image
+            - build
             - test
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
             branches:
               only: master
-      - publish-release:
+      - release:
           requires:
-            - publish-image
+            - publish
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
