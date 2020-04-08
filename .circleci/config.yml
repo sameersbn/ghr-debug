@@ -79,7 +79,7 @@ jobs:
             GIT_COMMIT: ${CIRCLE_SHA1}
       - run:
           name: Installing github-release tool
-          command: go get github.com/aktau/github-release
+          command: go get github.com/meterup/github-release
       - run:
           name: Creating github release
           command: |
