@@ -17,10 +17,17 @@ jobs:
           name: Building package
           command: make build
       - gcp-cli/install
-      - gcp-cli/initialize
       - run:
           name: Building docker image
           command: |
+            if [ -z "${GCLOUD_SERVICE_KEY}" ] || [ -z "${GOOGLE_PROJECT_ID}" ] || [ -z "${GOOGLE_COMPUTE_ZONE}" ]; then
+              echo "WARNING: Credentials are not exposed to forked PR's! Skipping step..."
+              exit 0
+            fi
+            echo ${GCLOUD_SERVICE_KEY}> > ${HOME}/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
 
   test:
