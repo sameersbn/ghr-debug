@@ -28,6 +28,7 @@ ${NOTABLE_CHANGES}
 
 Download Shaout ${RELEASE}
 
+- [container](https://gcr.io/cebuk-01/sameer/shaout:${RELEASE})
 - [linux/amd64](https://github.com/sameersbn/shaout/releases/download/${RELEASE}/shaout-linux-amd64)
 - [macos/amd64](https://github.com/sameersbn/shaout/releases/download/${RELEASE}/shaout-darwin-amd64)
 - [windows/amd64](https://github.com/sameersbn/shaout/releases/download/${RELEASE}/shaout-windows-amd64.exe)
