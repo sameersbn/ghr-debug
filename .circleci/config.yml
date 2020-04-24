@@ -5,6 +5,29 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.4
   codecov: codecov/codecov@1.0.5
 
+commands:
+  deploy:
+    description: "Deploy updates to target cluster"
+    parameters:
+      branch:
+        type: string
+        default: dev
+      cluster:
+        type: string
+        default: staging
+      keycloak:
+        type: boolean
+        default: false
+    steps:
+      - run: echo Deploying to << parameters.cluster >> using << parameters.branch >> branch
+      - run: |
+          echo "step 1"
+          <<# parameters.keycloak >>echo "update keycloak"<</ parameters.keycloak >>
+      - when:
+          condition: << parameters.branch >>
+          steps:
+            - run: echo "run this step only when branch is specified"
+
 jobs:
   checkout:
     executor:
@@ -77,6 +100,15 @@ jobs:
           name: Publishing docker image
           command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
 
+  deploy:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - deploy:
+          cluster: staging
+          keycloak: true
+
   release:
     executor:
       name: go/default
@@ -125,6 +157,14 @@ workflows:
           requires:
             - build
             - test
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - publish
           filters:
             tags:
               only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
