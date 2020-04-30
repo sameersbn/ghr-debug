@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   go: circleci/go@1.1.1
   gcp-cli: circleci/gcp-cli@1.8.4
+  ghpr: narrativescience/ghpr@0.1.0
   codecov: codecov/codecov@1.0.5
 
 commands:
@@ -34,7 +35,7 @@ jobs:
       name: go/default
       tag: '1.14'
     steps:
-      - checkout
+      - ghpr/build-prospective-branch
       - go/mod-download-cached
       - persist_to_workspace:
           root: ~/
