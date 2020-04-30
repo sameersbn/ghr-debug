@@ -36,6 +36,9 @@ jobs:
       tag: '1.14'
     steps:
       - ghpr/build-prospective-branch
+      - ghpr/post-pr-comment:
+          comment: ":dog: __The CI job has been aborted__  Failed to create a prospective merge branch as this pull request has conflicts that must be resolved.  Please resolve the conflicts before retrying."
+          when: on_fail
       - go/mod-download-cached
       - persist_to_workspace:
           root: ~/
