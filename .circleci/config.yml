@@ -129,7 +129,7 @@ commands:
         description: 'Image tag, defaults to the value of $CIRCLE_SHA1'
         type: string
     steps:
-      - unless:
+      - when:
           condition: <<parameters.pr>>
           steps:
             - run:
