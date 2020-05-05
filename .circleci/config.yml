@@ -146,7 +146,7 @@ commands:
                   done
 
 jobs:
-  build-test-and-publish:
+  build-and-publish:
     executor: docker/machine
     steps:
       - checkout
@@ -171,12 +171,12 @@ jobs:
           tag: latest
 
 workflows:
-  build-test-and-publish:
+  build-and-publish:
     jobs:
       - shellcheck/check:
           name: shellcheck
           ignore: SC2086,SC2181
-      - build-test-and-publish:
+      - build-and-publish:
           context: sameersbn
           requires:
             - shellcheck
