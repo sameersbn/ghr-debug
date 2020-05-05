@@ -1,10 +1,33 @@
 version: 2.1
 
 orbs:
-  shellcheck: circleci/shellcheck@1.3.16
-  docker: circleci/docker@1.0.1
+  go: circleci/go@1.1.1
+  gcp-cli: circleci/gcp-cli@1.8.4
+  codecov: codecov/codecov@1.0.5
 
 commands:
+  deploy:
+    description: "Deploy updates to target cluster"
+    parameters:
+      branch:
+        type: string
+        default: dev
+      cluster:
+        type: string
+        default: staging
+      keycloak:
+        type: boolean
+        default: false
+    steps:
+      - run: echo Deploying to << parameters.cluster >> using << parameters.branch >> branch
+      - run: |
+          echo "step 1"
+          <<# parameters.keycloak >>echo "update keycloak"<</ parameters.keycloak >>
+      - when:
+          condition: << parameters.branch >>
+          steps:
+            - run: echo "run this step only when branch is specified"
+
   docker-build:
     description: |
       Build and optionally deploy a Docker images
@@ -109,6 +132,57 @@ commands:
                     $docker_tag_args \
                     <<parameters.path>>
 
+  docker-save:
+    description: |
+      Save one or more images to a tar archive
+    parameters:
+      registry:
+        default: docker.io
+        description: |
+          Comma separated list of registry to use, defaults to docker.io
+        type: string
+      image:
+        description: Name of image to build
+        type: string
+      tag:
+        default: $CIRCLE_SHA1
+        description: 'Image tag, defaults to the value of $CIRCLE_SHA1'
+        type: string
+    steps:
+      - run:
+          name: Save image to tar archive
+          command: >
+            docker_images=""
+
+            IFS="," read -ra DOCKER_REGISTRIES \<<< "<< parameters.registry >>"
+
+            for registry in "${DOCKER_REGISTRIES[@]}"; do
+              IFS="," read -ra DOCKER_TAGS \<<< "<< parameters.tag >>"
+
+              for tag in "${DOCKER_TAGS[@]}"; do
+                docker_images="$docker_images $registry/<<parameters.image>>:${tag}"
+              done
+            done
+
+            mkdir -p ~/docker/
+
+            docker save -o ~/docker/docker-images.tar $docker_images
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - docker
+
+  docker-load:
+    description: |
+      Load tar archive
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Load images from tar archive
+          command: >
+            docker load -i ~/docker/docker-images.tar
+
   docker-publish:
     description: |
       Build and optionally deploy a Docker images
@@ -135,7 +209,6 @@ commands:
             - run:
                 name: Publish image for <<parameters.registry>>
                 command: >
-                  echo "<<parameters.pr>>"
                   IFS="," read -ra DOCKER_REGISTRIES \<<< "<< parameters.registry >>"
 
                   for registry in "${DOCKER_REGISTRIES[@]}"; do
@@ -147,38 +220,152 @@ commands:
                   done
 
 jobs:
-  build-and-publish:
-    executor: docker/machine
+  checkout:
+    executor:
+      name: go/default
+      tag: '1.14'
     steps:
       - checkout
-      - docker-build:
-          registry: docker.io,quay.io
-          image: sameersbn/shaout
-          tag: latest
-          cache_from: docker.io/sameersbn/shaout:latest
-          extra_build_args: '--build-arg GIT_COMMIT=${CIRCLE_SHA1} --build-arg GIT_TAG=$(date +%s)'
-          no_output_timeout: 45m
-      - docker/check:
-          registry: docker.io
-          docker-username: DOCKER_LOGIN
-          docker-password: DOCKER_PASSWORD
-      - docker/check:
-          registry: quay.io
-          docker-username: QUAY_LOGIN
-          docker-password: QUAY_PASSWORD
-      - docker-publish:
-          registry: docker.io,quay.io
-          image: sameersbn/shaout
-          tag: latest
-          pr: $CI_PULL_REQUEST
+      - go/mod-download-cached
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - go
+            - project
+
+  build:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Building package
+          command: make build
+      - gcp-cli/install
+      - gcp-cli/initialize
+      - run:
+          name: Building docker image
+          command: |
+            gcloud builds submit --config cloudbuild.yaml --substitutions _KANIKO_NO_PUSH=true
+
+  test:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Validating code formatting
+          command: make fmt-test
+      - run:
+          name: Vetting code
+          command: make vet
+      - run:
+          name: Running go unit tests
+          command: mkdir -p ${OUTPUT_DIR} && make test
+          environment:
+            OUTPUT_DIR: /tmp/test-results/
+      - store_test_results:
+          path: /tmp/test-results/
+      - run:
+          name: Generating coverage report
+          command: mkdir -p ${OUTPUT_DIR} && make coverage
+          environment:
+            OUTPUT_DIR: /tmp/artifacts/
+      - store_artifacts:
+          path: /tmp/artifacts/
+      - codecov/upload:
+          file: c.out
+
+  publish:
+    executor:
+      name: gcp-cli/google
+    steps:
+      - attach_workspace:
+          at: ~/
+      - gcp-cli/initialize
+      - run:
+          name: Publishing docker image
+          command: gcloud builds submit --config cloudbuild.yaml --substitutions COMMIT_SHA=${CIRCLE_SHA1},TAG_NAME=${CIRCLE_TAG:-$(git describe --tags --always)},_KANIKO_IMAGE_TAG=${CIRCLE_TAG:-latest}
+
+  deploy:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - deploy:
+          cluster: staging
+          keycloak: true
+
+  release:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Building release packages
+          command: make release
+          environment:
+            DIST_DIR: /tmp/dist/
+            GIT_TAG: ${CIRCLE_TAG}
+            GIT_COMMIT: ${CIRCLE_SHA1}
+      - run:
+          name: Installing github-release tool
+          command: go get github.com/meterup/github-release
+      - run:
+          name: Creating github release
+          command: |
+            PRE_RELEASE=${CIRCLE_TAG/${CIRCLE_TAG%-rc[0-9]*}/}
+            github-release delete -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} 2>/dev/null ||:
+            ./scripts/release-notes.sh ${CIRCLE_TAG} | github-release release ${PRE_RELEASE:+-p} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -d -
+            for f in $(find /tmp/dist -type f); do github-release upload -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -n $(basename ${f}) -f ${f} ; done
 
 workflows:
-  build-and-publish:
+  build-test-and-publish:
     jobs:
-      - shellcheck/check:
-          name: shellcheck
-          ignore: SC2086,SC2181
-      - build-and-publish:
-          context: sameersbn
+      - checkout:
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+      - build:
           requires:
-            - shellcheck
+            - checkout
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+      - test:
+          requires:
+            - checkout
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+      - publish:
+          requires:
+            - build
+            - test
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - publish
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              only: master
+      - release:
+          requires:
+            - publish
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              ignore: /.*/
