@@ -114,7 +114,7 @@ commands:
       Build and optionally deploy a Docker images
     parameters:
       pr:
-        default: $CI_PULL_REQUEST
+        default: ''
         type: string
       registry:
         default: docker.io
@@ -129,12 +129,13 @@ commands:
         description: 'Image tag, defaults to the value of $CIRCLE_SHA1'
         type: string
     steps:
-      - when:
+      - unless:
           condition: <<parameters.pr>>
           steps:
             - run:
                 name: Publish image for <<parameters.registry>>
                 command: >
+                  echo "<<parameters.pr>>"
                   IFS="," read -ra DOCKER_REGISTRIES \<<< "<< parameters.registry >>"
 
                   for registry in "${DOCKER_REGISTRIES[@]}"; do
@@ -169,6 +170,7 @@ jobs:
           registry: docker.io,quay.io
           image: sameersbn/shaout
           tag: latest
+          pr: $CI_PULL_REQUEST
 
 workflows:
   build-and-publish:
